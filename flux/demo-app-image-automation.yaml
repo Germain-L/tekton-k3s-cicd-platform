@@ -1,0 +1,50 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: demo-app
+  namespace: flux-system
+spec:
+  image: registry.germainleignel.com/personal/demo-app
+  interval: 1m
+  secretRef:
+    name: harbor-registry
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: demo-app
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: demo-app
+  filterTags:
+    pattern: '^[0-9a-f]{7,40}$'
+  policy:
+    alphabetical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageUpdateAutomation
+metadata:
+  name: demo-app
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: demo-app
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        name: Flux Bot
+        email: flux-bot@local
+      messageTemplate: |
+        chore: update demo-app image
+    push:
+      branch: main
+  update:
+    path: ./k8s
+    strategy: Setters

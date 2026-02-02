@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: demo-app-pipeline
+  namespace: tekton-pipelines
+spec:
+  params:
+    - name: repo-url
+      type: string
+      description: Git repository URL
+    - name: revision
+      type: string
+      description: Git revision (branch, tag, or SHA)
+      default: main
+    - name: image-repo
+      type: string
+      description: Image repository (no tag)
+      default: registry.germainleignel.com/personal/demo-app
+  workspaces:
+    - name: source
+    - name: dockerconfig
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: source
+    - name: kaniko
+      runAfter:
+        - git-clone
+      taskRef:
+        name: kaniko
+      params:
+        - name: IMAGE
+          value: $(params.image-repo):$(tasks.git-clone.results.commit)
+        - name: EXTRA_ARGS
+          value:
+            - --destination=$(params.image-repo):latest
+      workspaces:
+        - name: source
+          workspace: source
+        - name: dockerconfig
+          workspace: dockerconfig

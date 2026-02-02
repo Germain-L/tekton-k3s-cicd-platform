@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: demo-app-manual-
+  namespace: tekton-pipelines
+spec:
+  pipelineRef:
+    name: demo-app-pipeline
+  params:
+    - name: repo-url
+      value: https://github.com/Germain-L/tekton-demo-app.git
+    - name: revision
+      value: main
+    - name: image-repo
+      value: registry.germainleignel.com/personal/demo-app
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: dockerconfig
+      secret:
+        secretName: harbor-creds

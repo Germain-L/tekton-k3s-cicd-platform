@@ -1,0 +1,42 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: demo-app-template
+  namespace: tekton-pipelines
+spec:
+  params:
+    - name: revision
+      description: Git revision (SHA)
+    - name: repo-url
+      description: Git repository URL
+    - name: image-repo
+      description: Destination image repository (no tag)
+      default: registry.germainleignel.com/personal/demo-app
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: demo-app-
+        namespace: tekton-pipelines
+      spec:
+        pipelineRef:
+          name: demo-app-pipeline
+        params:
+          - name: repo-url
+            value: $(tt.params.repo-url)
+          - name: revision
+            value: $(tt.params.revision)
+          - name: image-repo
+            value: $(tt.params.image-repo)
+        workspaces:
+          - name: source
+            volumeClaimTemplate:
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+          - name: dockerconfig
+            secret:
+              secretName: harbor-creds

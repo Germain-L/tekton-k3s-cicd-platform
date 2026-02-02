@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: demo-app-webhook
+  namespace: tekton-pipelines
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - tekton.germainleignel.com
+      secretName: tekton-webhook-ingress
+  rules:
+    - host: tekton.germainleignel.com
+      http:
+        paths:
+          - path: /github
+            pathType: Prefix
+            backend:
+              service:
+                name: el-demo-app-listener
+                port:
+                  number: 8080
